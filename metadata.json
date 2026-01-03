@@ -1,0 +1,7 @@
+{
+  "name": "WorkSync Pro",
+  "description": "A comprehensive employee management system featuring real-time attendance tracking, detailed analytics, leave management, and AI-powered productivity insights.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
