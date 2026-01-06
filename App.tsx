@@ -8,6 +8,8 @@ import History from './views/History';
 import Settings from './views/Settings';
 import { TabType } from './types';
 import { getOfflineQueue, clearOfflineQueue } from './services/persistenceService';
+import { supabase } from './services/supabase';
+import Login from './views/Login';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -16,6 +18,8 @@ const App: React.FC = () => {
   const [jobTitle, setJobTitle] = useState<string>("Senior UX Researcher");
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
 
   useEffect(() => {
     const savedImg = localStorage.getItem('work_sync_profile_img');
@@ -40,6 +44,33 @@ const App: React.FC = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user?.email) {
+         // Auto-set username if not manually overridden in local storage
+         // But we respect local storage "work_sync_user_name" first in the other effect.
+         // Let's just update if saving didn't exist or maybe just leave it decoupled for now.
+         // Actually, let's map email username as default if local storage is empty?
+         if (!localStorage.getItem('work_sync_user_name')) {
+            setUserName(session.user.user_metadata?.full_name || session.user.email.split('@')[0]);
+         }
+      }
+      setLoadingSession(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoadingSession(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const processSyncQueue = async () => {
@@ -48,7 +79,7 @@ const App: React.FC = () => {
 
     setIsSyncing(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     console.log('Synced offline actions:', queue);
     clearOfflineQueue();
     setIsSyncing(false);
@@ -72,9 +103,9 @@ const App: React.FC = () => {
       case 'analytics': return <Analytics />;
       case 'history': return <History />;
       case 'profile': return (
-        <Settings 
-          profileImage={profileImage} 
-          onImageChange={handleImageChange} 
+        <Settings
+          profileImage={profileImage}
+          onImageChange={handleImageChange}
           userName={userName}
           jobTitle={jobTitle}
           onProfileUpdate={handleProfileUpdate}
@@ -83,6 +114,18 @@ const App: React.FC = () => {
       default: return <Home userName={userName} />;
     }
   };
+
+  if (loadingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1d1b32]">
+        <span className="size-10 border-4 border-white/20 border-t-white rounded-full animate-spin"></span>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login onLoginSuccess={() => {}} />;
+  }
 
   return (
     <div className="min-h-screen max-w-md mx-auto bg-background-light dark:bg-background-dark relative shadow-2xl overflow-hidden flex flex-col transition-colors duration-300 font-sans">
@@ -100,13 +143,13 @@ const App: React.FC = () => {
       )}
 
       <Header profileImage={profileImage} userName={userName} />
-      
+
       <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-24">
         {renderContent()}
       </main>
-      
+
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+
       <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[60]">
         <button className="size-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl shadow-primary/50 border-4 border-background-light dark:border-background-dark hover:scale-110 active:scale-90 transition-all group">
           <span className="material-symbols-outlined text-[28px] transition-transform group-hover:rotate-90">add</span>

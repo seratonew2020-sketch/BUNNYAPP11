@@ -16,6 +16,7 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [leaveType, setLeaveType] = useState('Sick Leave');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   // States for Change Work Time
   const [showChangeTimeForm, setShowChangeTimeForm] = useState(false);
@@ -23,6 +24,13 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
   const [requestStartTime, setRequestStartTime] = useState('09:00');
   const [requestEndTime, setRequestEndTime] = useState('17:00');
   const [requestReason, setRequestReason] = useState('');
+
+  // States for OT Form
+  const [showOTForm, setShowOTForm] = useState(false);
+  const [showConfirmOT, setShowConfirmOT] = useState(false);
+  const [otStartTime, setOtStartTime] = useState('17:00');
+  const [otEndTime, setOtEndTime] = useState('20:00');
+  const [otReason, setOtReason] = useState('');
 
   const holidays: Holiday[] = [
     { id: '1', date: '13-15 เม.ย.', month: 'เมษายน', name: 'วันสงกรานต์', type: 'Public' },
@@ -36,7 +44,7 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
 
   useEffect(() => {
     const timer = setInterval(() => setSeconds(s => s + 1), 1000);
-    
+
     if (navigator.onLine) {
       getSmartProductivityAdvice(userName, 5.5).then(setAdvice);
     } else {
@@ -46,7 +54,7 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
     const handleStatusChange = () => setIsOffline(!navigator.onLine);
     window.addEventListener('online', handleStatusChange);
     window.addEventListener('offline', handleStatusChange);
-    
+
     return () => {
       clearInterval(timer);
       window.removeEventListener('online', handleStatusChange);
@@ -73,12 +81,15 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
     { id: 'swap', label: 'สลับกะงาน', sub: 'แลกเปลี่ยนวันทำงาน', icon: 'swap_horiz', color: 'indigo' },
     { id: 'change_time', label: 'เปลี่ยนเวลางาน', sub: 'ปรับปรุงเวลาเข้า-ออก', icon: 'edit_calendar', color: 'rose' },
     { id: 'status', label: 'สถานะการอนุมัติ', sub: 'ตรวจสอบผลการอนุมัติ', icon: 'fact_check', color: 'emerald' },
-    { id: 'holidays', label: 'ตารางวันหยุด', sub: 'วันหยุดบริษัท & นักขัตฤกษ์', icon: 'event_available', color: 'purple' },
+    { id: 'labelfile', label: 'แจ้ง', sub: 'ลาบาร์ไฟล', icon: 'folder', color: 'blue' },
+    { id: 'ot', label: 'แจ้ง', sub: 'โอที', icon: 'alarm_add', color: 'purple' },
+    { id: 'holidays', label: 'ตารางวันหยุด', sub: 'วันหยุดบริษัท & นักขัตฤกษ์', icon: 'event_available', color: 'pink' },
   ];
 
   const handleFinalSubmitLeave = () => {
     setShowConfirmSubmit(false);
     setShowLeaveForm(false);
+    setAttachedFile(null);
     alert('ส่งคำขอลางานเรียบร้อยแล้ว');
   };
 
@@ -86,6 +97,12 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
     setShowConfirmChangeTime(false);
     setShowChangeTimeForm(false);
     alert('ส่งคำขอเปลี่ยนแปลงเวลางานเรียบร้อยแล้ว');
+  };
+
+  const handleFinalSubmitOT = () => {
+    setShowConfirmOT(false);
+    setShowOTForm(false);
+    alert('ส่งคำขอ OT เรียบร้อยแล้ว');
   };
 
   return (
@@ -113,27 +130,9 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4 mb-10">
-            <div className="flex flex-col items-center gap-2">
-              <div className="size-16 flex items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 shadow-lg">
-                <p className="text-3xl font-bold font-display">{h}</p>
-              </div>
-              <p className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">ชม.</p>
-            </div>
-            <div className="text-2xl font-bold pt-4 text-white/30 self-start mt-1">:</div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="size-16 flex items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 shadow-lg">
-                <p className="text-3xl font-bold font-display">{m}</p>
-              </div>
-              <p className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">นาที</p>
-            </div>
-            <div className="text-2xl font-bold pt-4 text-white/30 self-start mt-1">:</div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="size-16 flex items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 shadow-lg">
-                <p className="text-3xl font-bold font-display">{s}</p>
-              </div>
-              <p className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">วินาที</p>
-            </div>
+          <div className="text-center mb-8">
+            <p className="text-5xl font-bold font-display tracking-tight">{h}:{m}</p>
+            <p className="text-sm text-white/60 mt-2">ชั่วโมงที่ทำงานแล้ว</p>
           </div>
 
           <div className="space-y-3">
@@ -161,13 +160,15 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
 
       <div className="grid grid-cols-2 gap-3">
         {quickMenuItems.map((item) => (
-          <button 
-            key={item.id} 
+          <button
+            key={item.id}
             onClick={() => {
-              if (item.id === 'holidays') setShowHolidays(true);
               if (item.id === 'leave') setShowLeaveForm(true);
               if (item.id === 'change_time') setShowChangeTimeForm(true);
               if (item.id === 'swap') alert('เข้าสู่หน้าสลับกะงาน');
+              if (item.id === 'labelfile') alert('แจ้ง ลาบาร์ไฟล');
+              if (item.id === 'ot') setShowOTForm(true);
+              if (item.id === 'holidays') setShowHolidays(true);
             }}
             className="bg-[#1d1b32] p-4 rounded-2xl border border-white/5 flex flex-col items-start gap-3 shadow-sm hover:border-primary/30 transition-all active:scale-95 text-left group"
           >
@@ -188,7 +189,7 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
           <span className="size-1.5 rounded-full bg-primary animate-pulse"></span>
           กิจกรรมวันนี้
         </h3>
-        
+
         <div className="bg-[#1d1b32] rounded-[24px] border border-white/5 overflow-hidden shadow-xl">
           <div className="flex items-center gap-5 p-5 hover:bg-white/5 transition-colors">
             <div className="size-11 rounded-full bg-[#5444e4]/20 text-primary flex items-center justify-center shrink-0">
@@ -202,9 +203,9 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
               <p className="text-base font-bold tracking-tight text-white">09:00 น.</p>
             </div>
           </div>
-          
+
           <div className="mx-6 h-px bg-white/5"></div>
-          
+
           <div className="flex items-center gap-5 p-5 hover:bg-white/5 transition-colors opacity-80">
             <div className="size-11 rounded-full bg-white/5 text-slate-500 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-[22px]">coffee</span>
@@ -245,6 +246,48 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
                   <option value="Personal Leave">ลากิจ (Personal Leave)</option>
                 </select>
               </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">แนบเอกสารใบลา (ถ้ามี)</label>
+                <div className="mt-1 relative">
+                  <input
+                    type="file"
+                    id="leave-attachment"
+                    className="hidden"
+                    onChange={(e) => setAttachedFile(e.target.files ? e.target.files[0] : null)}
+                  />
+                  <label
+                    htmlFor="leave-attachment"
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl p-6 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                  >
+                    {attachedFile ? (
+                      <div className="flex items-center gap-3">
+                        <div className="size-10 rounded-xl bg-orange-500/20 text-orange-500 flex items-center justify-center">
+                          <span className="material-symbols-outlined">description</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{attachedFile.name}</p>
+                          <p className="text-[10px] text-slate-500">{(attachedFile.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                        <button
+                          onClick={(e) => { e.preventDefault(); setAttachedFile(null); }}
+                          className="size-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="size-12 rounded-full bg-white/5 flex items-center justify-center text-slate-400 mb-2 group-hover:scale-110 transition-transform">
+                          <span className="material-symbols-outlined text-[28px]">upload_file</span>
+                        </div>
+                        <p className="text-sm font-bold text-slate-300">คลิกเพื่อเลือกไฟล์</p>
+                        <p className="text-[10px] text-slate-500">PDF, JPG, PNG (ไม่เกิน 5MB)</p>
+                      </>
+                    )}
+                  </label>
+                </div>
+              </div>
               <button onClick={() => setShowConfirmSubmit(true)} className="w-full bg-orange-500 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-orange-500/20 active:scale-95 transition-all">ส่งคำขอลา</button>
             </div>
           </div>
@@ -271,35 +314,35 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">เวลาเข้างาน</label>
-                  <input 
-                    type="time" 
-                    value={requestStartTime} 
-                    onChange={(e) => setRequestStartTime(e.target.value)} 
-                    className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm font-bold" 
+                  <input
+                    type="time"
+                    value={requestStartTime}
+                    onChange={(e) => setRequestStartTime(e.target.value)}
+                    className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm font-bold"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">เวลาออกงาน</label>
-                  <input 
-                    type="time" 
-                    value={requestEndTime} 
-                    onChange={(e) => setRequestEndTime(e.target.value)} 
-                    className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm font-bold" 
+                  <input
+                    type="time"
+                    value={requestEndTime}
+                    onChange={(e) => setRequestEndTime(e.target.value)}
+                    className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm font-bold"
                   />
                 </div>
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">เหตุผลที่ขอเปลี่ยน</label>
-                <textarea 
-                  rows={3} 
+                <textarea
+                  rows={3}
                   value={requestReason}
                   onChange={(e) => setRequestReason(e.target.value)}
                   placeholder="ระบุเหตุผลในการขอปรับเวลา..."
                   className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm focus:ring-rose-500"
                 />
               </div>
-              <button 
-                onClick={() => setShowConfirmChangeTime(true)} 
+              <button
+                onClick={() => setShowConfirmChangeTime(true)}
                 className="w-full bg-rose-500 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-rose-500/20 active:scale-95 transition-all"
               >
                 ส่งคำขอเปลี่ยนเวลา
@@ -345,6 +388,82 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
         </div>
       )}
 
+      {/* OT Form Modal */}
+      {showOTForm && (
+        <div className="fixed inset-0 z-[110] flex items-end justify-center px-4 pb-20">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowOTForm(false)}></div>
+          <div className="relative w-full max-w-sm bg-[#1d1b32] rounded-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-500">
+            <div className="bg-purple-600 p-6 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold">แจ้งทำโอที</h3>
+                  <p className="text-white/60 text-xs mt-1">ขออนุมัติทำงานล่วงเวลา</p>
+                </div>
+                <button onClick={() => setShowOTForm(false)} className="size-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">เวลาเริ่ม</label>
+                  <input
+                    type="time"
+                    value={otStartTime}
+                    onChange={(e) => setOtStartTime(e.target.value)}
+                    className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">เวลาสิ้นสุด</label>
+                  <input
+                    type="time"
+                    value={otEndTime}
+                    onChange={(e) => setOtEndTime(e.target.value)}
+                    className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm font-bold"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">รายละเอียดงานที่ทำ</label>
+                <textarea
+                  rows={3}
+                  value={otReason}
+                  onChange={(e) => setOtReason(e.target.value)}
+                  placeholder="ระบุงานที่ต้องทำในช่วง OT..."
+                  className="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border-white/10 text-white text-sm focus:ring-purple-500"
+                />
+              </div>
+              <button
+                onClick={() => setShowConfirmOT(true)}
+                className="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-purple-500/20 active:scale-95 transition-all"
+              >
+                ส่งคำขอโอที
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* OT Confirmation Dialog */}
+      {showConfirmOT && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowConfirmOT(false)}></div>
+          <div className="relative w-full max-w-xs bg-[#1d1b32] rounded-[24px] p-6 shadow-2xl animate-in zoom-in duration-300">
+            <div className="size-16 mx-auto mb-4 bg-purple-500/20 text-purple-500 rounded-full flex items-center justify-center">
+              <span className="material-symbols-outlined text-[32px]">alarm_add</span>
+            </div>
+            <h3 className="text-lg font-bold text-center text-white mb-2">ยืนยันขอทำโอที?</h3>
+            <p className="text-sm text-slate-400 text-center mb-6">เวลา {otStartTime} - {otEndTime} น.<br/>ใช่หรือไม่?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowConfirmOT(false)} className="flex-1 py-3 rounded-xl bg-white/5 text-slate-400 font-bold text-xs">ยกเลิก</button>
+              <button onClick={handleFinalSubmitOT} className="flex-1 py-3 rounded-xl bg-purple-600 text-white font-bold text-xs">ยืนยัน</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showHolidays && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-20">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowHolidays(false)}></div>
@@ -384,7 +503,7 @@ const Home: React.FC<HomeProps> = ({ userName }) => {
           </div>
         </div>
       )}
-      
+
       <div className="h-24"></div>
     </div>
   );
