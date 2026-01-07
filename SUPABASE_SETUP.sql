@@ -53,3 +53,4 @@ $$ language plpgsql security definer;
 -- create trigger on_auth_user_created
 --   after insert on auth.users
 --   for each row execute procedure public.handle_new_user();
+ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS phone_number text; ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS email text;
