@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { TabType } from '../types';
+import React from "react";
+import { TabType } from "../types";
 
 interface NavigationProps {
   activeTab: TabType;
@@ -9,10 +8,11 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'home', icon: 'home', label: 'หน้าหลัก' },
-    { id: 'analytics', icon: 'analytics', label: 'วิเคราะห์' },
-    { id: 'history', icon: 'history', label: 'ประวัติ' },
-    { id: 'profile', icon: 'person', label: 'โปรไฟล์' },
+    { id: "home", icon: "home", label: "หน้าหลัก" },
+    { id: "analytics", icon: "analytics", label: "วิเคราะห์" },
+    { id: "history", icon: "history", label: "ประวัติ" },
+    { id: "attendance_logs", icon: "table_view", label: "บันทึกเวลา" },
+    { id: "profile", icon: "person", label: "โปรไฟล์" },
   ];
 
   return (
@@ -23,16 +23,18 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab }) => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex flex-col items-center justify-center transition-all duration-300 ${
-              activeTab === tab.id ? 'text-primary scale-110' : 'text-slate-400'
+              activeTab === tab.id ? "text-primary scale-110" : "text-slate-400"
             }`}
           >
-            <span className={`material-symbols-outlined text-[24px] ${activeTab === tab.id ? 'fill-1' : ''}`}>
+            <span
+              className={`material-symbols-outlined text-[24px] ${activeTab === tab.id ? "fill-1" : ""}`}
+            >
               {tab.icon}
             </span>
             <span className="text-[10px] font-medium mt-0.5">{tab.label}</span>
           </button>
         ))}
-        
+
         {/* Floating Add Button logic could be here, but we'll stick to a simple 4-tab layout as per typical SPA patterns if needed */}
       </div>
     </nav>

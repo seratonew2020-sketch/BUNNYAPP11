@@ -1,7 +1,8 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GOOGLE_GEN_AI_KEY || "";
+const ai = new GoogleGenAI({ apiKey });
 
 export const generateAIAvatar = async (role: string): Promise<string | null> => {
   try {
@@ -10,7 +11,7 @@ export const generateAIAvatar = async (role: string): Promise<string | null> => 
       contents: {
         parts: [
           {
-            text: `A professional, modern, and high-quality profile picture for a ${role}. 
+            text: `A professional, modern, and high-quality profile picture for a ${role}.
             Style: Minimalist 3D avatar or stylized portrait, vibrant soft background, studio lighting, centered composition.`,
           },
         ],

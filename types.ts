@@ -1,5 +1,5 @@
 
-export type TabType = 'home' | 'analytics' | 'history' | 'profile';
+export type TabType = 'home' | 'analytics' | 'history' | 'profile' | 'attendance_logs';
 
 export interface OTPRequest {
   id: string;

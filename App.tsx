@@ -5,6 +5,7 @@ import Home from "./views/Home";
 import Analytics from "./views/Analytics";
 import History from "./views/History";
 import Settings from "./views/Settings";
+import AttendanceLogs from "./views/AttendanceLogs";
 import { TabType } from "./types";
 import {
   getOfflineQueue,
@@ -16,7 +17,7 @@ import Login from "./views/Login";
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [profileImage, setProfileImage] = useState<string>(
-    "https://picsum.photos/seed/alex/200"
+    "https://picsum.photos/seed/alex/200",
   );
   const [userName, setUserName] = useState<string>("Alex Johnson");
   const [jobTitle, setJobTitle] = useState<string>("Senior UX Researcher");
@@ -145,6 +146,8 @@ const App: React.FC = () => {
             onProfileUpdate={handleProfileUpdate}
           />
         );
+      case "attendance_logs":
+        return <AttendanceLogs />;
       default:
         return <Home userName={userName} />;
     }
